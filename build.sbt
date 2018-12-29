@@ -5,7 +5,7 @@
 name := """kafka-manager"""
 
 /* For packaging purposes, -SNAPSHOT MUST contain a digit */
-version := "1.3.3.21"
+version := "1.3.3.22"
 
 scalaVersion := "2.11.8"
 
@@ -66,6 +66,34 @@ enablePlugins(SbtNativePackager)
  */
 
 enablePlugins(SystemdPlugin)
+
+
+enablePlugins(sbtdocker.DockerPlugin)
+dockerfile in docker := {
+  val zipFile: File = dist.value
+
+  new Dockerfile {
+    from("openjdk:8-jre")
+    add(zipFile, file("/opt/kafka-manager.zip"))
+    workDir("/opt")
+    run("unzip", "kafka-manager.zip")
+    run("rm", "-f", "kafka-manager.zip")
+
+    expose(9000)
+
+    cmd(s"kafka-manager-${version.value}/bin/kafka-manager")
+  }
+}
+
+imageNames in docker := Seq(
+  ImageName(
+    s"${name.value}:${version.value}"
+  )
+)
+
+buildOptions in docker := BuildOptions(
+  pullBaseImage = BuildOptions.Pull.Always
+)
 
 /*
  * Start service as user root

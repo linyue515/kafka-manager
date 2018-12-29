@@ -63,6 +63,8 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
   val kafka_1_0_0_Default = CreateTopic("",1,1,TopicConfigs.configNames(Kafka_1_0_0).map(n => TConfig(n,None)).toList)
   val kafka_1_0_1_Default = CreateTopic("",1,1,TopicConfigs.configNames(Kafka_1_0_1).map(n => TConfig(n,None)).toList)
   val kafka_1_1_0_Default = CreateTopic("",1,1,TopicConfigs.configNames(Kafka_1_1_0).map(n => TConfig(n,None)).toList)
+  val kafka_1_1_1_Default = CreateTopic("",1,1,TopicConfigs.configNames(Kafka_1_1_1).map(n => TConfig(n,None)).toList)
+  val kafka_2_0_0_Default = CreateTopic("",1,1,TopicConfigs.configNames(Kafka_2_0_0).map(n => TConfig(n,None)).toList)
 
   val defaultCreateForm = Form(
     mapping(
@@ -158,6 +160,8 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
           case Kafka_1_0_0 => (defaultCreateForm.fill(kafka_1_0_0_Default), clusterContext)
           case Kafka_1_0_1 => (defaultCreateForm.fill(kafka_1_0_1_Default), clusterContext)
           case Kafka_1_1_0 => (defaultCreateForm.fill(kafka_1_1_0_Default), clusterContext)
+          case Kafka_1_1_1 => (defaultCreateForm.fill(kafka_1_1_1_Default), clusterContext)
+          case Kafka_2_0_0 => (defaultCreateForm.fill(kafka_2_0_0_Default), clusterContext)
         }
       }
     }
@@ -165,7 +169,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
 
   def topics(c: String) = Action.async {
     kafkaManager.getTopicListExtended(c).map { errorOrTopicList =>
-      Ok(views.html.topic.topicList(c,errorOrTopicList))
+      Ok(views.html.topic.topicList(c,errorOrTopicList)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
     }
   }
 
@@ -178,14 +182,14 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
         case true => ForceRunAssignment
         case _ => RunAssignment
       }
-      Ok(views.html.topic.topicView(c,t,errorOrTopicIdentity,errorOrConsumerList, op))
+      Ok(views.html.topic.topicView(c,t,errorOrTopicIdentity,errorOrConsumerList, op)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
     }
   }
 
   def createTopic(clusterName: String) = Action.async { implicit request =>
     featureGate(KMTopicManagerFeature) {
       createTopicForm(clusterName).map { errorOrForm =>
-        Ok(views.html.topic.createTopic(clusterName, errorOrForm))
+        Ok(views.html.topic.createTopic(clusterName, errorOrForm)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
       }
     }
   }
@@ -206,7 +210,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
                 "Create Topic",
                 FollowLink("Try again.", routes.Topic.createTopic(clusterName).toString()),
                 FollowLink("Try again.", routes.Topic.createTopic(clusterName).toString())
-              ))
+              )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         },
         ct => {
@@ -221,7 +225,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
               "Create Topic",
               FollowLink("Go to topic view.", routes.Topic.topic(clusterName, ct.topic).toString()),
               FollowLink("Try again.", routes.Topic.createTopic(clusterName).toString())
-            ))
+            )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         }
       )
@@ -233,7 +237,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
     val futureErrorOrConsumerList = kafkaManager.getConsumersForTopic(clusterName, topic)
 
     futureErrorOrTopicIdentity.zip(futureErrorOrConsumerList).map {case (errorOrTopicIdentity,errorOrConsumerList) =>
-      Ok(views.html.topic.topicDeleteConfirm(clusterName,topic,errorOrTopicIdentity,errorOrConsumerList))
+      Ok(views.html.topic.topicDeleteConfirm(clusterName,topic,errorOrTopicIdentity,errorOrConsumerList)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
     }
   }
 
@@ -259,7 +263,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
               "Delete Topic",
               FollowLink("Go to topic list.", routes.Topic.topics(clusterName).toString()),
               FollowLink("Try again.", routes.Topic.topic(clusterName, topic).toString())
-            ))
+            )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         }
       )
@@ -279,7 +283,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
         })
       }
       errorOrFormFuture.map { errorOrForm =>
-        Ok(views.html.topic.addPartitions(clusterName, topic, errorOrForm))
+        Ok(views.html.topic.addPartitions(clusterName, topic, errorOrForm)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
       }
     }
   }
@@ -302,7 +306,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
         })
       }
       errorOrFormFuture.map { errorOrForm =>
-        Ok(views.html.topic.addPartitionsToMultipleTopics(clusterName, errorOrForm))
+        Ok(views.html.topic.addPartitionsToMultipleTopics(clusterName, errorOrForm)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
       }
     }
   }
@@ -323,7 +327,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
                 "Add Partitions",
                 FollowLink("Try again.", routes.Topic.addPartitions(clusterName, topic).toString()),
                 FollowLink("Try again.", routes.Topic.addPartitions(clusterName, topic).toString())
-              ))
+              )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         },
         addTopicPartitions => {
@@ -336,7 +340,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
               "Add Partitions",
               FollowLink("Go to topic view.", routes.Topic.topic(clusterName, addTopicPartitions.topic).toString()),
               FollowLink("Try again.", routes.Topic.addPartitions(clusterName, topic).toString())
-            ))
+            )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         }
       )
@@ -359,7 +363,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
                 "Add Partitions to All Topics",
                 FollowLink("Try again.", routes.Topic.addPartitionsToMultipleTopics(clusterName).toString()),
                 FollowLink("Try again.", routes.Topic.addPartitionsToMultipleTopics(clusterName).toString())
-              ))
+              )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         },
         addMultipleTopicsPartitions => {
@@ -375,7 +379,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
               "Add Partitions to All Topics",
               FollowLink("Go to topic list.", routes.Topic.topics(clusterName).toString()),
               FollowLink("Try again.", routes.Topic.addPartitionsToMultipleTopics(clusterName).toString())
-            ))
+            )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         }
       )
@@ -403,6 +407,8 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
           case Kafka_1_0_0 => TopicConfigs.configNames(Kafka_1_0_0).map(n => (n,TConfig(n,None))).toMap
           case Kafka_1_0_1 => TopicConfigs.configNames(Kafka_1_0_0).map(n => (n,TConfig(n,None))).toMap
           case Kafka_1_1_0 => TopicConfigs.configNames(Kafka_1_1_0).map(n => (n,TConfig(n,None))).toMap
+          case Kafka_1_1_1 => TopicConfigs.configNames(Kafka_1_1_1).map(n => (n,TConfig(n,None))).toMap
+          case Kafka_2_0_0 => TopicConfigs.configNames(Kafka_2_0_0).map(n => (n,TConfig(n,None))).toMap
         }
         val combinedMap = defaultConfigMap ++ ti.config.toMap.map(tpl => tpl._1 -> TConfig(tpl._1,Option(tpl._2)))
         (defaultUpdateConfigForm.fill(UpdateTopicConfig(ti.topic,combinedMap.toList.map(_._2),ti.configReadVersion)),
@@ -419,7 +425,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
         })
       }
       errorOrFormFuture.map { errorOrForm =>
-        Ok(views.html.topic.updateConfig(clusterName, topic, errorOrForm))
+        Ok(views.html.topic.updateConfig(clusterName, topic, errorOrForm)).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
       }
     }
   }
@@ -440,7 +446,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
                 "Update Config",
                 FollowLink("Try again.", routes.Topic.updateConfig(clusterName, topic).toString()),
                 FollowLink("Try again.", routes.Topic.updateConfig(clusterName, topic).toString())
-              ))
+              )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         },
         updateTopicConfig => {
@@ -455,7 +461,7 @@ class Topic (val messagesApi: MessagesApi, val kafkaManagerContext: KafkaManager
               "Update Config",
               FollowLink("Go to topic view.", routes.Topic.topic(clusterName, updateTopicConfig.topic).toString()),
               FollowLink("Try again.", routes.Topic.updateConfig(clusterName, topic).toString())
-            ))
+            )).withHeaders("X-Frame-Options" -> "SAMEORIGIN")
           }
         }
       )
